@@ -5,7 +5,7 @@
             "name": "C#: Mentat Debug",
             "type": "dotnet",
             "request": "launch",
-            "projectPath": "${workspaceFolder}/Mentat.csproj"
+            "projectPath": "${workspaceFolder}/src/Mentat.csproj"
         }
     ]
 }
