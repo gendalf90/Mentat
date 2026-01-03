@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Mentat;
 
-public class OllamaChatRequest
+internal class OllamaChatRequest
 {
     [JsonPropertyName("messages")]
     public OllamaMessage[] Messages { get; set; }
@@ -18,7 +18,7 @@ public class OllamaChatRequest
     public string KeepAlive { get; set; }
 }
 
-public class OllamaMessage
+internal class OllamaMessage
 {
     [JsonPropertyName("role")]
     public string Role { get; set; }
@@ -27,32 +27,27 @@ public class OllamaMessage
     public string Content { get; set; }
 }
 
-public class OllamaChatResponse
+internal class OllamaChatResponse
 {
     [JsonPropertyName("message")]
     public OllamaMessage Message { get; set; }
 }
 
-public class OllamaTagsResponse
+internal class OllamaTagsResponse
 {
     [JsonPropertyName("models")]
     public OllamaModel[] Models { get; set; }
 }
 
-public class OllamaModel
+internal class OllamaModel
 {
     [JsonPropertyName("name")]
     public string Name { get; set; }
 }
 
-public class OllamaOptions
+internal class OllamaClient(HttpClient client)
 {
-    public string OllamaUrl { get; set; }
-}
-
-public class OllamaClient(HttpClient client)
-{
-    public async Task<OllamaChatResponse> Chat(OllamaChatRequest chat, CancellationToken token)
+    public async Task<OllamaChatResponse> Chat(OllamaChatRequest chat, CancellationToken token = default)
     {
         var response = await client.PostAsJsonAsync("api/chat", chat, token);
 

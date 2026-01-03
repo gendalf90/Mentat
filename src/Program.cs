@@ -12,33 +12,28 @@ builder.Configuration
     .AddEnvironmentVariables()
     .AddCommandLine(args);
 
-builder.Services.Configure<TelegramOptions>(opt =>
-{
-    opt.BotToken = builder.Configuration[nameof(opt.BotToken)];
-    opt.TelegramUrl = builder.Configuration[nameof(opt.TelegramUrl)];
-});
-builder.Services.Configure<StorageOptions>(opt =>
-{
-    opt.StorageFolder = builder.Configuration[nameof(opt.StorageFolder)];
-});
-builder.Services.Configure<MessageServiceOptions>(opt =>
-{
-    opt.PollInterval = TimeSpan.Parse(builder.Configuration[nameof(opt.PollInterval)]);
-    opt.AllowedUsers = builder.Configuration[nameof(opt.AllowedUsers)].Split(',');
-    opt.OllamaModel = builder.Configuration[nameof(opt.OllamaModel)];
-    opt.OllamaKeepAlive = builder.Configuration[nameof(opt.OllamaKeepAlive)];
-});
-builder.Services.Configure<OllamaOptions>(opt =>
-{
-    opt.OllamaUrl = builder.Configuration[nameof(opt.OllamaUrl)];
-});
+builder.Services
+    .Configure<MessageProcessorOptions>(opt =>
+    {
+        opt.PollInterval = builder.Configuration.GetValue<TimeSpan>("PollInterval");
+    })
+    .Configure<OllamaOptions>(opt =>
+    {
+        opt.OllamaUrl = builder.Configuration.GetValue<string>("OllamaUrl");
+        opt.OllamaModel = builder.Configuration.GetValue<string>("OllamaModel");
+        opt.OllamaKeepAlive = builder.Configuration.GetValue<string>("OllamaKeepAlive");
+    })
+    .Configure<MailboxOptions>(opt =>
+    {
+        opt.ImapHost = builder.Configuration.GetValue<string>("MailImapHost");
+        opt.ImapPort = builder.Configuration.GetValue<int>("MailImapPort");
+        opt.SmtpHost = builder.Configuration.GetValue<string>("MailSmtpHost");
+        opt.SmtpPort = builder.Configuration.GetValue<int>("MailSmtpPort");
+        opt.Users = builder.Configuration.GetSection("MailUsers").Get<string[]>();
+        opt.Login = builder.Configuration.GetValue<string>("MailLogin");
+        opt.Password = builder.Configuration.GetValue<string>("MailPassword");
+    });
 
-builder.Services.AddHttpClient<TelegramClient>((provider, client) =>
-{
-    var options = provider.GetRequiredService<IOptions<TelegramOptions>>();
-
-    client.BaseAddress = new Uri($"{options.Value.TelegramUrl.TrimEnd('/')}/bot{options.Value.BotToken}/");
-});
 builder.Services.AddHttpClient<OllamaClient>((provider, client) =>
 {
     var options = provider.GetRequiredService<IOptions<OllamaOptions>>();
@@ -46,8 +41,11 @@ builder.Services.AddHttpClient<OllamaClient>((provider, client) =>
     client.Timeout = Timeout.InfiniteTimeSpan;
     client.BaseAddress = new Uri(options.Value.OllamaUrl);
 });
-builder.Services.AddSingleton<LocalStorage>();
-builder.Services.AddHostedService<MessageService>();
+
+builder.Services
+    .AddHostedService<MessageProcessor>()
+    .AddScoped<Mailbox>()
+    .AddScoped<Ollama>();
 
 var host = builder.Build();
 
