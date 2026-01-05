@@ -1,8 +1,8 @@
 # ![Logo](.docs/mentat.png) Mentat
 
-| A process cannot be understood by stopping it. Understanding must move with the flow of the process, must join it and flow with it.
+[![Docker](https://img.shields.io/docker/v/gendalf90/mentat)](https://hub.docker.com/r/gendalf90/mentat)
 
-[![Docker Pulls](img.shields.io)](https://hub.docker.com/r/gendalf90/mentat)
+> A process cannot be understood by stopping it. Understanding must move with the flow of the process, must join it and flow with it.
 
 ## What is it?
 
