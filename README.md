@@ -6,7 +6,7 @@
 
 ## What is it?
 
-The Mentat is a bot that you can communicate with by email. The bot uses ollama api to answer your requests and keeps context in chains of messages.
+The Mentat is a bot that you can communicate with by email. The bot uses IMAP and SMTP protocols to address mail server and OpenAI compatible api to answer your requests and keeps context in chains of emails.
 
 ## How it works?
 
@@ -16,9 +16,8 @@ To run Mentat you can use docker image:
 docker run -d \
   --name mentat \
   -e PollInterval='00:00:05' \ # by default
-  -e OllamaUrl='http://1.2.3.4:1234/' \ # by default http://localhost:11434/ (with --network=host for example)
-  -e OllamaModel='deepseek-r1:14b' \
-  -e OllamaKeepAlive='30m' \ # by default
+  -e OpenAIUrl='http://1.2.3.4:1234/' \ # by default http://localhost:11434/ (with --network=host for example)
+  -e OpenAIModel='deepseek-r1:14b' \
   -e MailImapHost='imap.gmail.com' \
   -e MailImapPort=993 \ # by default
   -e MailSmtpHost='smtp.gmail.com' \

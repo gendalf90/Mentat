@@ -17,11 +17,10 @@ builder.Services
     {
         opt.PollInterval = builder.Configuration.GetValue<TimeSpan>("PollInterval");
     })
-    .Configure<OllamaOptions>(opt =>
+    .Configure<OpenAIOptions>(opt =>
     {
-        opt.OllamaUrl = builder.Configuration.GetValue<string>("OllamaUrl");
-        opt.OllamaModel = builder.Configuration.GetValue<string>("OllamaModel");
-        opt.OllamaKeepAlive = builder.Configuration.GetValue<string>("OllamaKeepAlive");
+        opt.OpenAIUrl = builder.Configuration.GetValue<string>("OpenAIUrl");
+        opt.OpenAIModel = builder.Configuration.GetValue<string>("OpenAIModel");
     })
     .Configure<MailboxOptions>(opt =>
     {
@@ -34,18 +33,18 @@ builder.Services
         opt.Password = builder.Configuration.GetValue<string>("MailPassword");
     });
 
-builder.Services.AddHttpClient<OllamaClient>((provider, client) =>
+builder.Services.AddHttpClient<OpenAIClient>((provider, client) =>
 {
-    var options = provider.GetRequiredService<IOptions<OllamaOptions>>();
+    var options = provider.GetRequiredService<IOptions<OpenAIOptions>>();
 
     client.Timeout = Timeout.InfiniteTimeSpan;
-    client.BaseAddress = new Uri(options.Value.OllamaUrl);
+    client.BaseAddress = new Uri(options.Value.OpenAIUrl);
 });
 
 builder.Services
     .AddHostedService<MessageProcessor>()
     .AddScoped<Mailbox>()
-    .AddScoped<Ollama>();
+    .AddScoped<OpenAI>();
 
 var host = builder.Build();
 

@@ -28,7 +28,7 @@ public class MessageProcessor(
         using var scope = provider.CreateScope();
         
         var mailbox = scope.ServiceProvider.GetRequiredService<Mailbox>();
-        var ollama = scope.ServiceProvider.GetRequiredService<Ollama>();
+        var openAI = scope.ServiceProvider.GetRequiredService<OpenAI>();
         
         try
         {
@@ -43,7 +43,7 @@ public class MessageProcessor(
 
             var ordered = thread.OrderBy(message => message.Date);
 
-            var response = await ollama.GetAnswer(ordered.Select(message => new Message
+            var response = await openAI.GetAnswer(ordered.Select(message => new Message
             {
                 Text = message.Text,
                 FromBot = message.FromBot

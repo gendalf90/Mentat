@@ -2,13 +2,11 @@ using Microsoft.Extensions.Options;
 
 namespace Mentat;
 
-internal class OllamaOptions
+internal class OpenAIOptions
 {
-    public string OllamaUrl { get; set; }
+    public string OpenAIUrl { get; set; }
 
-    public string OllamaModel { get; set; }
-
-    public string OllamaKeepAlive { get; set; }
+    public string OpenAIModel { get; set; }
 }
 
 internal class Message
@@ -18,7 +16,7 @@ internal class Message
     public bool FromBot { get; set; }
 }
 
-internal class Ollama(OllamaClient client, IOptions<OllamaOptions> options)
+internal class OpenAI(OpenAIClient client, IOptions<OpenAIOptions> options)
 {
     private const string AssistantRole = "assistant";
     private const string UserRole = "user";
@@ -26,24 +24,23 @@ internal class Ollama(OllamaClient client, IOptions<OllamaOptions> options)
     public async Task<Message> GetAnswer(IEnumerable<Message> chat, CancellationToken token = default)
     {
         var chatMessages = chat
-            .Select(message => new OllamaMessage
+            .Select(message => new OpenAIMessage
             {
                 Role = message.FromBot ? AssistantRole : UserRole,
                 Content = message.Text
             })
             .ToArray();
 
-        var response = await client.Chat(new OllamaChatRequest
+        var response = await client.Chat(new OpenAIChat
         {
             Messages = chatMessages,
             Stream = false,
-            Model = options.Value.OllamaModel,
-            KeepAlive = options.Value.OllamaKeepAlive
+            Model = options.Value.OpenAIModel
         }, token);
 
         return new Message
         {
-            Text = response.Message.Content,
+            Text = response.Choices[0].Message.Content,
             FromBot = true
         };
     }
