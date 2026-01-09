@@ -22,7 +22,7 @@ docker run -d \
   -e MailImapPort=993 \ # by default
   -e MailSmtpHost='smtp.gmail.com' \
   -e MailSmtpPort=465 \ # by default
-  -e MailUsers='["user@mail.com"]' \ # list of users to response by bot
+  -e MailUsers='user@mail.com' \ # list of users separated by ',' to response by bot
   -e MailLogin='bot@gmail.com' \ # bot user for login at server
   -e MailPassword='asdf1234' \ # app password for login at server
   gendalf90/mentat:latest

@@ -28,7 +28,9 @@ builder.Services
         opt.ImapPort = builder.Configuration.GetValue<int>("MailImapPort");
         opt.SmtpHost = builder.Configuration.GetValue<string>("MailSmtpHost");
         opt.SmtpPort = builder.Configuration.GetValue<int>("MailSmtpPort");
-        opt.Users = builder.Configuration.GetSection("MailUsers").Get<string[]>();
+        opt.Users = builder.Configuration
+            .GetValue<string>("MailUsers")
+            .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
         opt.Login = builder.Configuration.GetValue<string>("MailLogin");
         opt.Password = builder.Configuration.GetValue<string>("MailPassword");
     });
