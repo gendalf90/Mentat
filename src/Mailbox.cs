@@ -159,12 +159,13 @@ internal class Mailbox(IOptions<MailboxOptions> options, ILogger<Mailbox> logger
     private Email Map(MimeMessage message)
     {
         var isBot = message.From.Mailboxes.Any(mailbox => mailbox.Address.Equals(options.Value.Login, StringComparison.OrdinalIgnoreCase));
-        
+        var text = message.TextBody ?? message.HtmlBody ?? string.Empty;
+
         return new Email
         {
             Id = message.MessageId,
             FromBot = isBot,
-            Text = message.TextBody,
+            Text = text,
             Date = message.Date.UtcDateTime
         };
     }

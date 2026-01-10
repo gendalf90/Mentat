@@ -25,6 +25,7 @@ docker run -d \
   -e MailUsers='user@mail.com' \ # list of users separated by ',' to response by bot
   -e MailLogin='bot@gmail.com' \ # bot user for login at server
   -e MailPassword='asdf1234' \ # app password for login at server
+  --restart=unless-stopped \
   gendalf90/mentat:latest
 ```
 
