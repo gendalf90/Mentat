@@ -7,6 +7,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MimeKit;
 
+namespace Mentat;
+
 internal class Email
 {   
     public string Id { get; set; }
@@ -146,12 +148,15 @@ internal class Mailbox(IOptions<MailboxOptions> options, ILogger<Mailbox> logger
 
     private static MimeEntity BuildBody(string text)
     {
-        var builder = new BodyBuilder();
-
-        builder.TextBody = text;
-        builder.HtmlBody = Markdown.ToHtml(text, new MarkdownPipelineBuilder()
+        var html = Markdown.ToHtml(text, new MarkdownPipelineBuilder()
             .UseAdvancedExtensions()
             .Build());
+        
+        var builder = new BodyBuilder
+        {
+            TextBody = text,
+            HtmlBody = html
+        };
 
         return builder.ToMessageBody();
     }

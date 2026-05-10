@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Options;
 using Mentat;
 using Microsoft.Extensions.Logging;
 
@@ -28,10 +27,11 @@ builder.Services
     {
         opt.PollInterval = builder.Configuration.GetValue<TimeSpan>("PollInterval");
     })
-    .Configure<OpenAIOptions>(opt =>
+    .Configure<AIOptions>(opt =>
     {
         opt.OpenAIUrl = builder.Configuration.GetValue<string>("OpenAIUrl");
         opt.OpenAIModel = builder.Configuration.GetValue<string>("OpenAIModel");
+        opt.OpenAIApiKey = builder.Configuration.GetValue<string>("OpenAIApiKey");
     })
     .Configure<MailboxOptions>(opt =>
     {
@@ -46,19 +46,11 @@ builder.Services
         opt.Password = builder.Configuration.GetValue<string>("MailPassword");
     });
 
-builder.Services.AddHttpClient<OpenAIClient>((provider, client) =>
-{
-    var options = provider.GetRequiredService<IOptions<OpenAIOptions>>();
-
-    client.Timeout = Timeout.InfiniteTimeSpan;
-    client.BaseAddress = new Uri(options.Value.OpenAIUrl);
-});
-
 builder.Services
     .AddHostedService<MessageProcessor>()
     .AddScoped<Mailbox>()
-    .AddScoped<OpenAI>();
+    .AddScoped<AI>();
 
 var host = builder.Build();
 
-await host.RunAsync();
+host.Run();
