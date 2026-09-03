@@ -1,7 +1,5 @@
-using System.ClientModel;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Options;
-using OpenAI;
-using OpenAI.Responses;
 
 namespace Mentat;
 
@@ -12,6 +10,8 @@ internal class AIOptions
     public string OpenAIModel { get; set; }
 
     public string OpenAIApiKey { get; set; }
+
+    public string OpenAIPrompt { get; set; }
 }
 
 internal class Message
@@ -21,42 +21,33 @@ internal class Message
     public bool FromBot { get; set; }
 }
 
-#pragma warning disable OPENAI001
-internal class AI(IOptions<AIOptions> options)
+internal class AI(IChatClient client, IOptions<AIOptions> options)
 {
     public async Task<Message> GetAnswer(IEnumerable<Message> chat, CancellationToken token = default)
     {
-        var client = new OpenAIClient(new ApiKeyCredential(options.Value.OpenAIApiKey), new OpenAIClientOptions
-        {
-            Endpoint = new Uri(options.Value.OpenAIUrl),
-            NetworkTimeout = Timeout.InfiniteTimeSpan
-        });
-        
-        var responses = client.GetResponsesClient();
-        var request = new CreateResponseOptions(options.Value.OpenAIModel, chat.Select(Map))
-        {
-            StoredOutputEnabled = false
-        };
-
-        var response = await responses.CreateResponseAsync(request, token);
+        var response = await client.GetResponseAsync(Map(chat), cancellationToken: token);
 
         return new Message
         {
-            Text = response.Value.GetOutputText(),
+            Text = response.Text,
             FromBot = true
         };
     }
 
-    private ResponseItem Map(Message message)
+    private IEnumerable<ChatMessage> Map(IEnumerable<Message> messages)
     {
-        var parts = new List<ResponseContentPart>
-        {
-            ResponseContentPart.CreateInputTextPart(message.Text)
-        };
+        var prompt = options.Value.OpenAIPrompt;
 
-        return message.FromBot
-            ? ResponseItem.CreateAssistantMessageItem(parts)
-            : ResponseItem.CreateUserMessageItem(parts);
+        if (!string.IsNullOrEmpty(prompt))
+        {
+            yield return new ChatMessage(ChatRole.System, prompt);
+        }
+
+        foreach (var message in messages)
+        {
+            var role = message.FromBot ? ChatRole.Assistant : ChatRole.User;
+        
+            yield return new ChatMessage(role, message.Text);
+        }
     }
 }
-#pragma warning restore OPENAI001

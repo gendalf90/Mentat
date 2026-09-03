@@ -80,6 +80,8 @@ internal class Mailbox(IOptions<MailboxOptions> options, ILogger<Mailbox> logger
             threadMessages.Add(Map(await client.Inbox.GetMessageAsync(summary.UniqueId, token)));
         }
 
+        await client.DisconnectAsync(true, token);
+
         logger.LogInformation($"Found thread with {threadMessages.Count} messages for request {earliestNotAnsweredSummary.Envelope.MessageId} from {earliestNotAnsweredSummary.Envelope.From}");
 
         return threadMessages;
@@ -106,22 +108,38 @@ internal class Mailbox(IOptions<MailboxOptions> options, ILogger<Mailbox> logger
             return;
         }
 
-        var reply = new MimeMessage();
+        await SendReplyFor(answeringMessageSummary, answerText, token);
 
-        reply.To.AddRange(answeringMessageSummary.Envelope.From.Mailboxes.Where(mailbox => options.Value.Users.Any(user => mailbox.Address.Equals(user, StringComparison.OrdinalIgnoreCase))));
+        await client.Inbox.SetFlagsAsync(answeringMessageSummary.UniqueId, MessageFlags.Answered, true, token);
+        await client.DisconnectAsync(true, token);
+    }
+
+    private async Task SendReplyFor(IMessageSummary message, string text, CancellationToken token)
+    {
+        using var reply = new MimeMessage();
+
+        reply.To.AddRange(message.Envelope.From.Mailboxes.Where(mailbox => options.Value.Users.Any(user => mailbox.Address.Equals(user, StringComparison.OrdinalIgnoreCase))));
         reply.From.Add(new MailboxAddress(Name, options.Value.Login));
         reply.Bcc.Add(new MailboxAddress(Name, options.Value.Login));
-        reply.Subject = answeringMessageSummary.Envelope.Subject.Contains("Re:", StringComparison.OrdinalIgnoreCase)
-            ? answeringMessageSummary.Envelope.Subject
-            : $"Re: {answeringMessageSummary.Envelope.Subject}";
-        reply.InReplyTo = answeringMessageSummary.Envelope.MessageId;
-        reply.References.AddRange(answeringMessageSummary.References);
-        reply.References.Add(answeringMessageSummary.Envelope.MessageId);
-        reply.Body = BuildBody(answerText);
+        reply.Subject = message.Envelope.Subject.Contains("Re:", StringComparison.OrdinalIgnoreCase)
+            ? message.Envelope.Subject
+            : $"Re: {message.Envelope.Subject}";
+        reply.InReplyTo = message.Envelope.MessageId;
+        reply.References.AddRange(message.References);
+        reply.References.Add(message.Envelope.MessageId);
+        reply.Body = BuildBody(text);
 
-        await SendMessage(reply, token);
-        
-        await client.Inbox.SetFlagsAsync(answeringMessageSummary.UniqueId, MessageFlags.Answered, true, token);
+        using var client = new SmtpClient();
+
+        await client.ConnectAsync(options.Value.SmtpHost, options.Value.SmtpPort, cancellationToken: token);
+        await client.AuthenticateAsync(options.Value.Login, options.Value.Password, token);
+
+        logger.LogInformation($"Authentificated as {options.Value.Login} in Smtp: {options.Value.SmtpHost}:{options.Value.SmtpPort}");
+
+        await client.SendAsync(reply, token);
+        await client.DisconnectAsync(true, token);
+
+        logger.LogInformation($"Message with subject {reply.Subject} is sent to {reply.To} as reply to message {reply.InReplyTo}");
     }
 
     private async Task InitClient(ImapClient client, CancellationToken token)
@@ -130,20 +148,6 @@ internal class Mailbox(IOptions<MailboxOptions> options, ILogger<Mailbox> logger
         await client.AuthenticateAsync(options.Value.Login, options.Value.Password, token);
 
         logger.LogInformation($"Authentificated as {options.Value.Login} in Imap: {options.Value.ImapHost}:{options.Value.ImapPort}");
-    }
-
-    private async Task SendMessage(MimeMessage message, CancellationToken token)
-    {
-        using var client = new SmtpClient();
-
-        await client.ConnectAsync(options.Value.SmtpHost, options.Value.SmtpPort, cancellationToken: token);
-        await client.AuthenticateAsync(options.Value.Login, options.Value.Password, token);
-
-        logger.LogInformation($"Authentificated as {options.Value.Login} in Smtp: {options.Value.SmtpHost}:{options.Value.SmtpPort}");
-
-        await client.SendAsync(message, token);
-
-        logger.LogInformation($"Message with subject {message.Subject} is sent to {message.To} as reply to message {message.InReplyTo}");
     }
 
     private static MimeEntity BuildBody(string text)

@@ -19,6 +19,7 @@ docker run -d \
   -e OpenAIUrl='http://1.2.3.4:1234/' \ # by default http://localhost:11434/ (with --network=host for example)
   -e OpenAIModel='deepseek-r1:14b' \
   -e OpenAIApiKey='default-dummy-key' \ # by default: set any not empty value if backend does not have authorization otherwise set the api key
+  -e OpenAIPrompt='' \ # the system prompt for ai assistant (empty by default)
   -e MailImapHost='imap.gmail.com' \
   -e MailImapPort=993 \ # by default
   -e MailSmtpHost='smtp.gmail.com' \
