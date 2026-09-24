@@ -25,7 +25,10 @@ internal class AI(IChatClient client, IOptions<AIOptions> options)
 {
     public async Task<Message> GetAnswer(IEnumerable<Message> chat, CancellationToken token = default)
     {
-        var response = await client.GetResponseAsync(Map(chat), cancellationToken: token);
+        var response = await client.GetResponseAsync(chat.Select(Map), new ChatOptions
+        {
+            Instructions = options.Value.OpenAIPrompt
+        }, token);
 
         return new Message
         {
@@ -34,20 +37,8 @@ internal class AI(IChatClient client, IOptions<AIOptions> options)
         };
     }
 
-    private IEnumerable<ChatMessage> Map(IEnumerable<Message> messages)
+    private ChatMessage Map(Message message)
     {
-        var prompt = options.Value.OpenAIPrompt;
-
-        if (!string.IsNullOrEmpty(prompt))
-        {
-            yield return new ChatMessage(ChatRole.System, prompt);
-        }
-
-        foreach (var message in messages)
-        {
-            var role = message.FromBot ? ChatRole.Assistant : ChatRole.User;
-        
-            yield return new ChatMessage(role, message.Text);
-        }
+        return new ChatMessage(message.FromBot ? ChatRole.Assistant : ChatRole.User, message.Text);
     }
 }

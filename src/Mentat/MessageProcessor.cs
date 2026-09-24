@@ -55,7 +55,7 @@ public class MessageProcessor(
         }
         catch (Exception e)
         {
-            logger.LogError(e, "Error while processing messages");
+            logger.LogError($"Error while processing messages: {e.Message}");
         }
     }
 }

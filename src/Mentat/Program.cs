@@ -8,19 +8,17 @@ using OpenAI.Chat;
 using System.ClientModel;
 using OpenAI;
 using Microsoft.Extensions.Options;
+using Serilog;
+using Serilog.Formatting.Compact;
 
 var builder = Host.CreateApplicationBuilder(args);
+var logger = new LoggerConfiguration()
+    .Enrich.FromLogContext()
+    .WriteTo.Console(new CompactJsonFormatter())
+    .CreateLogger();
 
-builder.Services.AddLogging(builder => builder
-    .ClearProviders()
-    .AddSimpleConsole(opt => 
-    {
-        opt.SingleLine = true;
-        opt.UseUtcTimestamp = true;
-        opt.IncludeScopes = true;
-        opt.TimestampFormat = "[yyyy-MM-dd HH:mm:ss.fff] ";
-    })
-    .SetMinimumLevel(LogLevel.Information));
+builder.Logging.ClearProviders();
+builder.Logging.AddSerilog(logger, true);
 
 builder.Configuration.Sources.Clear();
 builder.Configuration
