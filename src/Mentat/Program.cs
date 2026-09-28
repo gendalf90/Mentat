@@ -4,12 +4,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.AI;
 using Mentat;
-using OpenAI.Chat;
 using System.ClientModel;
 using OpenAI;
 using Microsoft.Extensions.Options;
 using Serilog;
 using Serilog.Formatting.Compact;
+using OpenAI.Responses;
 
 var builder = Host.CreateApplicationBuilder(args);
 var logger = new LoggerConfiguration()
@@ -59,15 +59,16 @@ builder.Services
 builder.Services.AddChatClient(provider =>
 {
     var options = provider.GetRequiredService<IOptions<AIOptions>>();
-    
-    return new ChatClient(
-        options.Value.OpenAIModel, 
+
+    #pragma warning disable OPENAI001
+    return new ResponsesClient(
         new ApiKeyCredential(options.Value.OpenAIApiKey), 
-        new OpenAIClientOptions
+        new ResponsesClientOptions
         {
-            Endpoint = new Uri(options.Value.OpenAIUrl),
+            Endpoint = new Uri(new Uri(options.Value.OpenAIUrl), "v1/"),
             NetworkTimeout = Timeout.InfiniteTimeSpan
-        }).AsIChatClient();
+        }).AsIChatClient(options.Value.OpenAIModel);
+    #pragma warning restore OPENAI001
 }, ServiceLifetime.Scoped).UseLogging();
 
 var host = builder.Build();

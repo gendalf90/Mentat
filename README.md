@@ -32,3 +32,6 @@ docker run -d \
 ```
 
 Then just send an email with question from `user@mail.com` to `bot@gmail.com` and wait for response. If you want to use the context of the conversation so just reply the last response from bot.
+
+**Notes**
+- It uses *responses* OpenAI api for model engine communication.

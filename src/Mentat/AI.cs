@@ -1,5 +1,6 @@
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Options;
+using OpenAI.Responses;
 
 namespace Mentat;
 
@@ -25,10 +26,16 @@ internal class AI(IChatClient client, IOptions<AIOptions> options)
 {
     public async Task<Message> GetAnswer(IEnumerable<Message> chat, CancellationToken token = default)
     {
+        #pragma warning disable OPENAI001
         var response = await client.GetResponseAsync(chat.Select(Map), new ChatOptions
         {
-            Instructions = options.Value.OpenAIPrompt
+            Instructions = options.Value.OpenAIPrompt,
+            RawRepresentationFactory = _ => new CreateResponseOptions
+            {
+                StoredOutputEnabled = false
+            }
         }, token);
+        #pragma warning restore OPENAI001
 
         return new Message
         {
